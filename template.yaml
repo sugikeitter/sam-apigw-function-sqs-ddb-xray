@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-sqs-lambda-py
+
+  Sample SAM Template for sam-sqs-lambda-py
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    
+  IndexPageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/index/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          DDB_TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        ### 追加のインラインポリシーになる
+        - Statement:
+          - Sid: "Query"
+            Effect: Allow
+            Action:
+              - "dynamodb:Query"
+            Resource: !GetAtt DynamoDBTable.Arn
+      Architectures:
+        - x86_64
+      Events:
+        MyHttpApiGwEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: "/"
+  FunctionToSQS:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/lambdaToSqs/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          SQS_QUEUE_NAME: !GetAtt MySqsQueue.QueueName
+      Policies:
+        ### 追加のインラインポリシーになる
+        - Statement:
+            - Sid: "SendMessageTo"
+              Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+                - "sqs:GetQueueUrl"
+                - "sqs:GetQueueAttributes"
+              Resource: !GetAtt MySqsQueue.Arn
+      Architectures:
+        - x86_64
+      Events:
+        MyHttpApiGwEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: POST
+            Path: "/asyncLightRequest"
+  FunctionFromSQSToDynamoDB:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/sqsToDdb/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          DDB_TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        ### 追加のインラインポリシーになる
+        - Statement:
+          - Sid: "PutItemTo"
+            Effect: Allow
+            Action:
+              - "dynamodb:PutItem"
+            Resource: !GetAtt DynamoDBTable.Arn
+      Architectures:
+        - x86_64
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MySqsQueue.Arn
+            BatchSize: 10
+
+  MySqsQueue:
+    Type: AWS::SQS::Queue
+
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: recieveTime
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: recieveTime
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  HelloWorldFunction:
+    Description: "SQS Queue ARN"
+    Value: !GetAtt MySqsQueue.Arn
