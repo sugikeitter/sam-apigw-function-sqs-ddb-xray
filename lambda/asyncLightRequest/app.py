@@ -41,9 +41,11 @@ style = """
                  'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Osaka-Mono',  /* Mac/iOS */
                  'Noto Sans JP', Monospace;
 }
-.top {
+
+.recieveId {
     color: #009879;
 }
+
 .styled-table {
     border-collapse: collapse;
     margin: 25px 0;
@@ -141,8 +143,12 @@ def lambda_handler(event, context):
     </tr>
     """
     for ddbItems in res.get('Items', []):
+        rcvId = ddbItems.get("recieveId", "")
+        if rcvId == recieveId:
+            rcvId = '<span class="recieveId">'+rcvId+'</span>'
+
         recieveIdsHtml += "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>".format(
-            ddbItems.get("recieveId", ""),
+            rcvId,
             ddbItems.get("name", "NO_NEME"),
             ddbItems.get("recieveTime", ""),
             ddbItems.get("processedTime", "")
@@ -156,5 +162,5 @@ def lambda_handler(event, context):
         "headers": {
             "content-type": "text/html; charset=utf-8"
         },
-        "body": html.format(style=style, TopMsg='<p calss="topMsg">受付番号: '+recieveId+'</p>', RecieveIds=recieveIdsHtml),
+        "body": html.format(style=style, TopMsg='<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>', RecieveIds=recieveIdsHtml),
     }
