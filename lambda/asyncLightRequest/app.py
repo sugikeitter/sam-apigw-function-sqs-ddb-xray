@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import base64
 import json
 import os
 import uuid
@@ -74,18 +75,26 @@ API Gateway(HTTP)からPOSTリクエストを受けて、現在時刻とPOSTに�
 """
 def lambda_handler(event, context):
     
+    # POSTのテキスト(name=XXX)を取得
     print(event)
+    body = event.get('body', 'bmFtZT1OT19OQU1F') # 'bmFtZT1OT19OQU1F'をdecodeすると'name=NO_NAME'
+    print(body)
+    decodedBody = base64.b64decode(body).decode() # POSTのbodyがAPIGWでencodeされてるのでdecode
+    print(decodedBody)
+    name = decodedBody.split('=')[1][0:12] # bodyは空文字でもname=''がくる前提
+    if name == "":
+        name = 'NO_NAME'
+
     JST = timezone(timedelta(hours=+9), 'JST')
     recieveTime = datetime.now(JST).isoformat()[0:23] # 日本時間のミリ秒3桁までの文字列
     yearAndDate = recieveTime[0:10]
     recieveId = uuid.uuid4().hex # ランダムな文字列
+
     # SQSキューに情報を渡す
-    body = json.loads(event.get('body', '{}'))
-    name = body.get('name', recieveId[3:9])
     msg = {
         "recieveTime": recieveTime,
         "recieveId": recieveId,
-        "name": name[0:12],
+        "name": name,
     }
     res = queue.send_message(
         MessageBody=json.dumps(msg),
@@ -95,7 +104,7 @@ def lambda_handler(event, context):
     res = table.put_item(
                 Item={
                     'id': yearAndDate,
-                    'recieveTime': recieveTime,
+                    'recieveTime': recieveTime, # TODO uuidと合わせて排他制御が必要
                     'recieveId': recieveId,
                     'name': name,
                 })

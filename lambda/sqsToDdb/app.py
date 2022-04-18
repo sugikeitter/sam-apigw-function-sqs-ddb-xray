@@ -21,6 +21,7 @@ def lambda_handler(event, context):
             JST = timezone(timedelta(hours=+9), 'JST')
             processedTime = datetime.now(JST).isoformat()[0:23] # 日本時間のミリ秒3桁までの文字列
     
+            # TODO 既にprocessedTime以外がItemとしてputされてる場合のみputする条件更新が必要
             res = table.put_item(
                 Item={
                     'id': payload.get("recieveTime", "YYYY-MM-DD")[0:10],

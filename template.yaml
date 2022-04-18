@@ -43,7 +43,7 @@ Resources:
   FunctionToSQS:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/lambdaToSqs/
+      CodeUri: lambda/asyncLightRequest/
       Handler: app.lambda_handler
       Runtime: python3.8
       Environment:

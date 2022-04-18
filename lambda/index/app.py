@@ -17,6 +17,15 @@ html = """
   </style>
 </head>
 <body>
+  <form action="./asyncLightRequest" method="POST">
+    <div>
+      <label for="name">Let's submit some name</label>
+      <input id="name" type="text" name="name" maxlength="12">
+    </div>
+    <div>
+      <input type="submit" value="Send">
+    </div>
+  </form>
   {RecieveIds}
 </body>
 </html>
