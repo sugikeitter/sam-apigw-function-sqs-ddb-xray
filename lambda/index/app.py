@@ -18,12 +18,13 @@ html = """
 </head>
 <body>
   <form action="./asyncLightRequest" method="POST">
-    <div>
-      <label for="name">Let's submit some name</label>
-      <input id="name" type="text" name="name" maxlength="12">
-    </div>
-    <div>
-      <input type="submit" value="Send">
+    <div class="post">
+      <div class="inputTxt">
+        <input id="name" type="text" name="name" placeholder="Name" maxlength="12">
+      </div>
+      <div class="submitButton">
+        <input type="submit" value="Send" class="sendButton">
+      </div>
     </div>
   </form>
   {RecieveIds}
@@ -36,7 +37,11 @@ style = """
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
-    font-family: Menlo, Monaco, 'Courier New', monospace;
+    font-family: 'Liberation Serif', 'Noto Sans CJK JP',  /* Linux/Android/ChromeOS */
+                 'TakaoGothic', 'VL Gothic',  /* Debian/Ubuntu */
+                 'Yu Gothic', 'MS Gothic',  /* Windows */
+                 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Osaka-Mono',  /* Mac/iOS */
+                 'Noto Sans JP', Monospace;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
@@ -67,6 +72,39 @@ style = """
 .styled-table tbody tr.active-row {
     font-weight: bold;
     color: #009879;
+}
+
+.post{
+	position:relative;
+  width:400px;
+}
+.post .inputTxt{
+	margin-right:105px;
+	padding:8px;
+	background-color:#fff;
+	border:1px solid #aaa;
+}
+.post .inputTxt input{
+	width:100%;
+	height:24px;
+	line-height:24px;
+	background:none;
+	border:none;
+}
+.post .submitButton{
+	position:absolute;
+	top:0;
+	right:0;
+}
+.post .submitButton .sendButton{
+	display:block;
+	width:100px;
+	height:42px;
+	color:#fff;
+	line-height:40px;
+	text-align:center;
+	background-color:#009879;
+	border:1px solid #c66;
 }
 """
 

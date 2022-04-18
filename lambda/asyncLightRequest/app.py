@@ -24,19 +24,35 @@ html = """
   </style>
 </head>
 <body>
-  {TopMsg}
-  <a href="/">トップへ</a>
+  <div class="top">
+    {TopMsg}
+    <a href="/">トップへ</a>
+  </div>
   {RecieveIds}
 </body>
 </html>
 """
 
 style = """
+.top {
+    font-family: 'Liberation Serif', 'Noto Sans CJK JP',  /* Linux/Android/ChromeOS */
+                 'TakaoGothic', 'VL Gothic',  /* Debian/Ubuntu */
+                 'Yu Gothic', 'MS Gothic',  /* Windows */
+                 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Osaka-Mono',  /* Mac/iOS */
+                 'Noto Sans JP', Monospace;
+}
+.top {
+    color: #009879;
+}
 .styled-table {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
-    font-family: Menlo, Monaco, 'Courier New', monospace;
+    font-family: 'Liberation Serif', 'Noto Sans CJK JP',  /* Linux/Android/ChromeOS */
+                 'TakaoGothic', 'VL Gothic',  /* Debian/Ubuntu */
+                 'Yu Gothic', 'MS Gothic',  /* Windows */
+                 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Osaka-Mono',  /* Mac/iOS */
+                 'Noto Sans JP', Monospace;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
@@ -133,8 +149,6 @@ def lambda_handler(event, context):
         )
     
     recieveIdsHtml += "</table>"
-    
-    
 
     return {
         "isBase64Encoded": False,
@@ -142,5 +156,5 @@ def lambda_handler(event, context):
         "headers": {
             "content-type": "text/html; charset=utf-8"
         },
-        "body": html.format(style=style, TopMsg="<p>受付番号: "+recieveId+"</p>", RecieveIds=recieveIdsHtml),
+        "body": html.format(style=style, TopMsg='<p calss="topMsg">受付番号: '+recieveId+'</p>', RecieveIds=recieveIdsHtml),
     }
