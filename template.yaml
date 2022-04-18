@@ -49,6 +49,7 @@ Resources:
       Environment:
         Variables:
           SQS_QUEUE_NAME: !GetAtt MySqsQueue.QueueName
+          DDB_TABLE_NAME: !Ref DynamoDBTable
       Policies:
         ### 追加のインラインポリシーになる
         - Statement:
@@ -59,6 +60,13 @@ Resources:
                 - "sqs:GetQueueUrl"
                 - "sqs:GetQueueAttributes"
               Resource: !GetAtt MySqsQueue.Arn
+        - Statement:
+          - Sid: "QueryAndPutItem"
+            Effect: Allow
+            Action:
+              - "dynamodb:Query"
+              - "dynamodb:PutItem"
+            Resource: !GetAtt DynamoDBTable.Arn
       Architectures:
         - x86_64
       Events:

@@ -20,7 +20,7 @@ def lambda_handler(event, context):
             # print(payload)
             JST = timezone(timedelta(hours=+9), 'JST')
             processedTime = datetime.now(JST).isoformat()[0:23] # 日本時間のミリ秒3桁までの文字列
-            # TODO テーブル設計でsortKeyがTimestampになるように検討が必要
+    
             res = table.put_item(
                 Item={
                     'id': payload.get("recieveTime", "YYYY-MM-DD")[0:10],
