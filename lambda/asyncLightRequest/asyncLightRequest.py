@@ -108,13 +108,13 @@ def lambda_handler(event, context):
     if name.startswith('4'):
         return response_html(
             400,
-            '<p>400 Bad Request</p>',
+            '<h1>400 Bad Request</h1>',
             ''
         )
     elif name.startswith('5'):
         return response_html(
             500,
-            '<p>500 Internal Server Error</p>',
+            '<h1>500 Internal Server Error</h1>',
             ''
         )
     elif name == "":
