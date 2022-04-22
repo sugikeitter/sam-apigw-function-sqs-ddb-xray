@@ -105,7 +105,19 @@ def lambda_handler(event, context):
     # decodedBody = base64.b64decode(body).decode() # HTTP APIはデフォルト設定だとPOSTのbodyがAPIGWでencodeされてるのでdecode
     # print(decodedBody)
     name = body.split('=')[1][0:12] # bodyは空文字でもname=''がくる前提
-    if name == "":
+    if name.startswith('4'):
+        return response_html(
+            400,
+            'Bad Request',
+            ''
+        )
+    elif name.startswith('5'):
+        return response_html(
+            500,
+            'Internal Server Error',
+            ''
+        )
+    elif name == "":
         name = 'NO_NAME'
 
     JST = timezone(timedelta(hours=+9), 'JST')
@@ -172,17 +184,23 @@ def lambda_handler(event, context):
         )
 
     recieveIdsHtml += "</table>"
+    return response_html(
+        200,
+        '<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>',
+        recieveIdsHtml
+    )
 
+def response_html(status_code, msg, recieveIdsHtml):
     return {
         "isBase64Encoded": False,
-        "statusCode": 200,
+        "statusCode": status_code,
         "headers": {
             "content-type": "text/html; charset=utf-8"
         },
         "body": html.format(
             style=style,
             ApigwStage=os.getenv('APIGW_STAGE', 'Dev'),
-            TopMsg='<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>',
+            TopMsg=msg,
             RecieveIds=recieveIdsHtml
         ),
     }
