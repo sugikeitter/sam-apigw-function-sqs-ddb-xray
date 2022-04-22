@@ -186,7 +186,7 @@ def lambda_handler(event, context):
     recieveIdsHtml += "</table>"
     return response_html(
         200,
-        '<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>',
+        '<p>申し込みを受け付けました👍</p><p>受付ID: <span class="recieveId">'+recieveId+'</span></p>',
         recieveIdsHtml
     )
 

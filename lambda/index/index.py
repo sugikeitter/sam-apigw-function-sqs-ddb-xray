@@ -28,7 +28,7 @@ html = """
         <input id="name" type="text" name="name" placeholder="Name" maxlength="12">
       </div>
       <div class="submitButton">
-        <input type="submit" value="Send" class="sendButton">
+        <input type="submit" value="申し込み" class="sendButton">
       </div>
     </div>
   </form>
