@@ -106,12 +106,14 @@ def lambda_handler(event, context):
     # print(decodedBody)
     name = body.split('=')[1][0:12] # bodyは空文字でもname=''がくる前提
     if name.startswith('4'):
+        print("[ERROR] 400 Bad Request, name={n}".foramt(n=name))
         return response_html(
             400,
             '<h1>400 Bad Request</h1>',
             ''
         )
     elif name.startswith('5'):
+        print("[ERROR] 500 Internal Server Error, name={n}".foramt(n=name))
         return response_html(
             500,
             '<h1>500 Internal Server Error</h1>',
