@@ -10,20 +10,31 @@ Globals:
   Function:
     Timeout: 10
     Tracing: Active
+  Api:
+    TracingEnabled: true
+
+Parameters:
+  ApiGwStage:
+    Type: String
 
 Resources:
-  HttpApi:
-    Type: AWS::Serverless::HttpApi
-    
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref ApiGwStage
+
   IndexPageFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda/index/
-      Handler: app.lambda_handler
+      Handler: index.lambda_handler
       Runtime: python3.8
+      Layers:
+        - !Ref XrayLayer
       Environment:
         Variables:
           DDB_TABLE_NAME: !Ref DynamoDBTable
+          API_GW_STAGE: !Ref ApiGwStage
       Policies:
         ### 追加のインラインポリシーになる
         - Statement:
@@ -35,22 +46,25 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        MyHttpApiGwEvent:
-          Type: HttpApi
+        MyRestApiGwEvent:
+          Type: Api
           Properties:
-            ApiId: !Ref HttpApi
+            RestApiId: !Ref RestApi
             Method: GET
             Path: "/"
   FunctionToSQS:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda/asyncLightRequest/
-      Handler: app.lambda_handler
+      Handler: asyncLightRequest.lambda_handler
       Runtime: python3.8
+      Layers:
+        - !Ref XrayLayer
       Environment:
         Variables:
           SQS_QUEUE_NAME: !GetAtt MySqsQueue.QueueName
           DDB_TABLE_NAME: !Ref DynamoDBTable
+          API_GW_STAGE: !Ref ApiGwStage
       Policies:
         ### 追加のインラインポリシーになる
         - Statement:
@@ -71,18 +85,20 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        MyHttpApiGwEvent:
-          Type: HttpApi
+        MyRestApiGwEvent:
+          Type: Api
           Properties:
-            ApiId: !Ref HttpApi
+            RestApiId: !Ref RestApi
             Method: POST
             Path: "/asyncLightRequest"
   FunctionFromSQSToDynamoDB:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda/sqsToDdb/
-      Handler: app.lambda_handler
+      Handler: sqsToDdb.lambda_handler
       Runtime: python3.8
+      Layers:
+        - !Ref XrayLayer
       Environment:
         Variables:
           DDB_TABLE_NAME: !Ref DynamoDBTable
@@ -108,20 +124,36 @@ Resources:
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
-    Properties: 
-      AttributeDefinitions: 
+    Properties:
+      AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
         - AttributeName: recieveTime
           AttributeType: S
-      KeySchema: 
+      KeySchema:
         - AttributeName: id
           KeyType: HASH
         - AttributeName: recieveTime
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
+  XrayLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: lambda_layer/aws_xray_sdk/.
+      CompatibleRuntimes:
+        - python3.8
+    Metadata:
+      BuildMethod: python3.8 # Required to have AWS SAM build this layer
 Outputs:
   HelloWorldFunction:
     Description: "SQS Queue ARN"
     Value: !GetAtt MySqsQueue.Arn
+  ApiURL:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub
+      - "https://${RestApiId}.execute-api.${AWS::Region}.amazonaws.com/${ApiGwStg}/"
+      - RestApiId:
+          !Ref RestApi
+        ApiGwStg:
+          !Ref ApiGwStage

@@ -7,6 +7,11 @@ import uuid
 import boto3
 from boto3.dynamodb.conditions import Key
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
+
 sqs_resource = boto3.resource("sqs")
 queue = sqs_resource.get_queue_by_name(
     QueueName=os.environ['SQS_QUEUE_NAME']
@@ -26,7 +31,7 @@ html = """
 <body>
   <div class="top">
     {TopMsg}
-    <a href="/">トップへ</a>
+    <a href="/{ApigwStage}">トップへ</a>
   </div>
   {RecieveIds}
 </body>
@@ -92,14 +97,14 @@ style = """
 API Gateway(HTTP)からPOSTリクエストを受けて、現在時刻とPOSTに入ってるパラメータをSQSキューに送る
 """
 def lambda_handler(event, context):
-    
+
     # POSTのテキスト(name=XXX)を取得
     print(event)
-    body = event.get('body', 'bmFtZT1OT19OQU1F') # 'bmFtZT1OT19OQU1F'をdecodeすると'name=NO_NAME'
+    body = event.get('body', 'name=NO_NAME') # 'bmFtZT1OT19OQU1F'をdecodeすると'name=NO_NAME'
     print(body)
-    decodedBody = base64.b64decode(body).decode() # POSTのbodyがAPIGWでencodeされてるのでdecode
-    print(decodedBody)
-    name = decodedBody.split('=')[1][0:12] # bodyは空文字でもname=''がくる前提
+    # decodedBody = base64.b64decode(body).decode() # HTTP APIはデフォルト設定だとPOSTのbodyがAPIGWでencodeされてるのでdecode
+    # print(decodedBody)
+    name = body.split('=')[1][0:12] # bodyは空文字でもname=''がくる前提
     if name == "":
         name = 'NO_NAME'
 
@@ -114,9 +119,21 @@ def lambda_handler(event, context):
         "recieveId": recieveId,
         "name": name,
     }
+
+    print("--TRACE_ID--")
+    print(os.getenv("_X_AMZN_TRACE_ID"))
+
     res = queue.send_message(
         MessageBody=json.dumps(msg),
+        MessageSystemAttributes={
+            'AWSTraceHeader': {
+                'StringValue': os.getenv("_X_AMZN_TRACE_ID"),
+                'DataType': 'String'
+            }
+        }
     )
+    print("--SQS response--")
+    print(res)
 
     # DynamoDBにprocessedTime以外をput
     res = table.put_item(
@@ -126,7 +143,7 @@ def lambda_handler(event, context):
                     'recieveId': recieveId,
                     'name': name,
                 })
-    
+
     # DynamoDBの直近数件をQuery
     JST = timezone(timedelta(hours=+9), 'JST')
     timestamp = datetime.now(JST).isoformat()[0:23] # 日本時間のミリ秒3桁までの文字列
@@ -153,7 +170,7 @@ def lambda_handler(event, context):
             ddbItems.get("recieveTime", ""),
             ddbItems.get("processedTime", "")
         )
-    
+
     recieveIdsHtml += "</table>"
 
     return {
@@ -162,5 +179,10 @@ def lambda_handler(event, context):
         "headers": {
             "content-type": "text/html; charset=utf-8"
         },
-        "body": html.format(style=style, TopMsg='<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>', RecieveIds=recieveIdsHtml),
+        "body": html.format(
+            style=style,
+            ApigwStage=os.getenv('APIGW_STAGE', 'Dev'),
+            TopMsg='<p>受付番号: <span class="recieveId">'+recieveId+'</span></p>',
+            RecieveIds=recieveIdsHtml
+        ),
     }

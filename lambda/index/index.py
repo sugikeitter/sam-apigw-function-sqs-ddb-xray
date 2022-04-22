@@ -5,6 +5,11 @@ import os
 import boto3
 from boto3.dynamodb.conditions import Key
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
+
 ddb_resource = boto3.resource("dynamodb")
 table = ddb_resource.Table(os.environ['DDB_TABLE_NAME'])
 
@@ -17,7 +22,7 @@ html = """
   </style>
 </head>
 <body>
-  <form action="./asyncLightRequest" method="POST">
+  <form action="/{ApigwStage}/asyncLightRequest" method="POST">
     <div class="post">
       <div class="inputTxt">
         <input id="name" type="text" name="name" placeholder="Name" maxlength="12">
@@ -135,14 +140,18 @@ def lambda_handler(event, context):
             ddbItems.get("recieveTime", ""),
             ddbItems.get("processedTime", "")
         )
-    
+
     recieveIdsHtml += "</table>"
-        
+
     return {
         "isBase64Encoded": False,
         "statusCode": 200,
         "headers": {
             "content-type": "text/html; charset=utf-8"
         },
-        "body": html.format(style=style, RecieveIds=recieveIdsHtml),
+        "body": html.format(
+            style=style,
+            ApigwStage=os.getenv('APIGW_STAGE', 'Dev'),
+            RecieveIds=recieveIdsHtml,
+        ),
     }
