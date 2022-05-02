@@ -134,7 +134,7 @@ def lambda_handler(event, context):
     </tr>
     """
     for ddbItems in res.get('Items', []):
-        recieveIdsHtml += "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>".format(
+        recieveIdsHtml += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
             ddbItems.get("recieveId", ""),
             ddbItems.get("name", "NO_NEME"),
             ddbItems.get("recieveTime", ""),
