@@ -1,3 +1,5 @@
+![](https://raw.githubusercontent.com/sugikeitter/sam-apigw-function-sqs-ddb-xray/main/sam-apigw-function-sqs-ddb-xray.drawio.svg)
+
 # sam-sqs-lambda-py
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
